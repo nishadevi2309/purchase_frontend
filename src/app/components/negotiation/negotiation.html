@@ -1,0 +1,29 @@
+<div class="negotiation-container">
+  <h2>Review & Negotiate</h2>
+  
+  <div class="pr-details" *ngIf="selectedPR">
+    <h3>Purchase Request Details</h3>
+    <div class="detail-item">
+      <label>Event ID:</label>
+      <span>{{ selectedPR.eventid }}</span>
+    </div>
+    <div class="detail-item">
+      <label>Vendor ID:</label>
+      <span>{{ selectedPR.vendorid }}</span>
+    </div>
+    <div class="detail-item">
+      <label>Allocated Amount:</label>
+    <span>₹{{ selectedPR.allocatedamount }}</span>
+    </div>
+  </div>
+
+  <div class="no-selection" *ngIf="!selectedPR">
+    <p>No purchase request selected. Please select a PR from the dashboard to negotiate.</p>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-secondary" (click)="navigateTo('/dashboard')">
+      Back to Dashboard
+    </button>
+  </div>
+</div>
