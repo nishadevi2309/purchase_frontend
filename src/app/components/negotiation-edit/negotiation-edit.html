@@ -1,0 +1,139 @@
+<div class="edit-container">
+  <div class="header">
+    <h2>Edit Negotiation #{{ negotiationId }}</h2>
+    <button class="btn-back" (click)="cancel()">
+      <i class="fas fa-list"></i> Back to List
+    </button>
+  </div>
+
+  <div *ngIf="isLoading" class="loading">
+    <i class="fas fa-spinner fa-spin fa-2x"></i>
+    <p>Loading negotiation details...</p>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-error">
+    <i class="fas fa-exclamation-circle"></i> {{ errorMessage }}
+  </div>
+  
+  <div *ngIf="successMessage" class="alert alert-success">
+    <i class="fas fa-check-circle"></i> {{ successMessage }}
+  </div>
+
+  <div *ngIf="!isLoading" class="edit-form">
+    <!-- Negotiation Information Section -->
+    <div class="info-section" *ngIf="negotiation">
+      <h3><i class="fas fa-info-circle"></i> Negotiation Information</h3>
+      <div class="info-grid">
+        <div class="info-item">
+          <label>Negotiation ID:</label>
+          <span>NEG-{{ negotiation.negotiationid || negotiation.negotiationId }}</span>
+        </div>
+        <div class="info-item">
+          <label>Event ID:</label>
+          <span>{{ negotiation.eventid || negotiation.eventId }}</span>
+        </div>
+        <div class="info-item">
+          <label>Vendor ID:</label>
+          <span>Vendor {{ negotiation.vendorid || negotiation.vendorId }}</span>
+        </div>
+        <div class="info-item">
+          <label>Initial Quote:</label>
+          <span class="amount">₹{{ negotiation.initialquoteamount | number:'1.2-2' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Update Form Section - Always show this section -->
+    <div class="form-section">
+      <h3><i class="fas fa-edit"></i> Update Negotiation</h3>
+      
+      <!-- Status Field -->
+      <div class="form-group">
+        <label for="status">Status <span class="required">*</span></label>
+        <select 
+          id="status" 
+          [(ngModel)]="negotiation.negotiationstatus" 
+          class="form-control" 
+          [disabled]="isSaving">
+          <option value="">Select Status</option>
+          <option *ngFor="let status of statusOptions" [value]="status">{{ status }}</option>
+        </select>
+      </div>
+      
+      <!-- Final Quote Amount Field -->
+      <div class="form-group">
+        <label for="finalQuote">Final Quote Amount <span class="required">*</span></label>
+        <div style="position: relative;">
+          <input 
+            type="number" 
+            id="finalQuote" 
+            [(ngModel)]="negotiation.finalquoteamount" 
+            class="form-control" 
+            [disabled]="isSaving"
+            step="0.01"
+            min="0"
+            placeholder="Enter final quote amount">
+        </div>
+      </div>
+      
+      <!-- Savings Calculation -->
+      <div class="savings-section" *ngIf="negotiation?.finalquoteamount && negotiation.finalquoteamount > 0">
+        <div class="savings-box">
+          <label>Savings:</label>
+          <span class="savings-value positive">
+            ₹{{ calculateSavings() | number:'1.2-2' }} 
+            ({{ calculateSavingsPercentage() | number:'1.1-1' }}%)
+          </span>
+        </div>
+      </div>
+
+      <!-- Negotiation Date Field (Static/Read-only) -->
+      <div class="form-group">
+        <label>Negotiation Date</label>
+        <div class="info-display" style="padding: 8px; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; color: #495057;">
+          {{ negotiation?.negotiationDate | date:'dd/MM/yyyy' }}
+        </div>
+      </div>
+
+      <!-- Negotiation Comments/Description Field -->
+      <div class="form-group">
+        <label for="negotiationComments">Negotiation Comments/Description</label>
+        <textarea 
+          id="negotiationComments"
+          [(ngModel)]="negotiation.comments" 
+          class="form-control"
+          [disabled]="isSaving"
+          rows="4"
+          placeholder="Enter negotiation comments, reasons for amount changes, terms discussed, or any additional notes...">
+        </textarea>
+        <small style="color: #666; font-size: 12px; margin-top: 5px; display: block;">
+          Add any relevant details about the negotiation process, agreements reached, or important notes.
+        </small>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="button-group">
+      <button 
+        class="btn btn-primary" 
+        (click)="updateNegotiation()" 
+        [disabled]="isSaving || !negotiation?.negotiationstatus">
+        <i class="fas fa-save"></i>
+        <span *ngIf="!isSaving">Save Changes</span>
+        <span *ngIf="isSaving">Saving...</span>
+      </button>
+      <button 
+        class="btn btn-secondary" 
+        (click)="updateStatus()" 
+        [disabled]="isSaving || !negotiation?.negotiationstatus">
+        <i class="fas fa-flag"></i> Update Status Only
+      </button>
+      <button 
+        class="btn btn-cancel" 
+        (click)="cancel()" 
+        [disabled]="isSaving">
+        <i class="fas fa-times"></i> Cancel
+      </button>
+    </div>
+  </div>
+</div>
