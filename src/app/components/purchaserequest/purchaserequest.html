@@ -95,6 +95,96 @@
             <!-- Table -->
             <div class="table-container">
                 <h3>Purchase Requests</h3>
+                
+                <!-- Filter Section -->
+                <div class="filter-container">
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label for="prIdFilter">PR ID:</label>
+                            <input 
+                                type="text" 
+                                id="prIdFilter"
+                                [(ngModel)]="filters.prId" 
+                                (input)="onFilterChange()"
+                                placeholder="Enter PR ID"
+                                class="filter-input">
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label for="eventFilter">Event ID/Name:</label>
+                            <input 
+                                type="text" 
+                                id="eventFilter"
+                                [(ngModel)]="filters.eventIdOrName" 
+                                (input)="onFilterChange()"
+                                placeholder="Enter Event ID or Name"
+                                class="filter-input">
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label for="vendorFilter">Vendor ID/Name:</label>
+                            <input 
+                                type="text" 
+                                id="vendorFilter"
+                                [(ngModel)]="filters.vendorIdOrName" 
+                                (input)="onFilterChange()"
+                                placeholder="Enter Vendor ID or Name"
+                                class="filter-input">
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label for="statusFilter">Status:</label>
+                            <select 
+                                id="statusFilter"
+                                [(ngModel)]="filters.status" 
+                                (change)="onFilterChange()"
+                                class="filter-select">
+                                <option *ngFor="let option of statusOptions" [value]="option.value">
+                                    {{ option.label }}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label for="startAmount">Start Amount (₹):</label>
+                            <input 
+                                type="number" 
+                                id="startAmount"
+                                [(ngModel)]="filters.startAmount" 
+                                (input)="onFilterChange()"
+                                placeholder="Min amount"
+                                class="filter-input"
+                                min="0">
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label for="endAmount">End Amount (₹):</label>
+                            <input 
+                                type="number" 
+                                id="endAmount"
+                                [(ngModel)]="filters.endAmount" 
+                                (input)="onFilterChange()"
+                                placeholder="Max amount"
+                                class="filter-input"
+                                min="0">
+                        </div>
+                        
+                        <div class="filter-group">
+                            <button class="btn btn-secondary" (click)="clearFilters()">
+                                <i class="fas fa-times"></i> Clear Filters
+                            </button>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <span class="filter-results">
+                                Found {{ totalItems }} result(s)
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
                 <table>
                     <thead>
                         <tr>
@@ -108,10 +198,10 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr *ngFor="let pr of purchaserequestsList; let i = index">
-                            <td>{{ pr.prid }}</td>
-                            <td>{{ pr.eventid }}</td>
-                            <td>{{ pr.vendorid }}</td>
+                        <tr *ngFor="let pr of paginatedPurchaseRequests; let i = index">
+                            <td>{{ pr.prId }}</td>
+                            <td>{{ pr.eventId }} - {{ getEventName(pr.eventId) }}</td>
+                            <td>{{ pr.vendorId }} - {{ getVendorName(pr.vendorId) }}</td>
                             <td>₹{{ pr.allocatedamount | number:'1.2-2' }}</td>
                             <td>
                                 <span class="status-badge" 
@@ -131,14 +221,40 @@
                                 <a href="#" class="action-link" (click)="openEditModal(pr); $event.preventDefault()">Edit</a>
                             </td>
                         </tr>
-                        <tr *ngIf="purchaserequestsList.length === 0">
+                        <tr *ngIf="paginatedPurchaseRequests.length === 0">
                             <td colspan="7" class="no-data">No Purchase Requests found. Click "Raise PR" to create one.</td>
                         </tr>
                     </tbody>
                 </table>
+
+                <!-- Pagination Controls -->
+                <div class="pagination-container" *ngIf="totalPages > 1">
+                    <div class="pagination-info">
+                        <span>Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to {{ getEndIndex() }} of {{ totalItems }} results</span>
+                    </div>
+                    <div class="pagination-controls">
+                        <button class="pagination-btn" [disabled]="currentPage === 1" (click)="previousPage()">
+                            <i class="fas fa-chevron-left"></i> Previous
+                        </button>
+                        
+                        <div class="page-numbers">
+                            <button 
+                                *ngFor="let page of getPageNumbers()" 
+                                class="page-btn" 
+                                [class.active]="page === currentPage"
+                                (click)="goToPage(page)">
+                                {{ page }}
+                            </button>
+                        </div>
+                        
+                        <button class="pagination-btn" [disabled]="currentPage === totalPages" (click)="nextPage()">
+                            Next <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
             </div>
 
-            <!-- Modal for Raise PR -->
+            <!-- Modal for Raise PR (No changes needed here as it's for input) -->
             <div class="modal-overlay" *ngIf="isModalOpen" (click)="closeModal()">
                 <div class="modal-content" (click)="$event.stopPropagation()">
                     <div class="modal-header">
@@ -151,23 +267,23 @@
                     <div class="modal-body">
                         <form class="purchase-form">
                             <div class="form-group">
-                                <label for="modal-eventid">Event ID:</label>
+                                <label for="modal-eventId">Event ID:</label>
                                 <input 
                                     type="number" 
-                                    id="modal-eventid" 
-                                    [(ngModel)]="purchaserequest.eventid" 
-                                    name="eventid"
+                                    id="modal-eventId" 
+                                    [(ngModel)]="purchaserequest.eventId" 
+                                    name="eventId"
                                     placeholder="Enter Event ID"
                                     required>
                             </div>
 
                             <div class="form-group">
-                                <label for="modal-vendorid">Vendor ID:</label>
+                                <label for="modal-vendorId">Vendor ID:</label>
                                 <input 
                                     type="number" 
-                                    id="modal-vendorid" 
-                                    [(ngModel)]="purchaserequest.vendorid" 
-                                    name="vendorid"
+                                    id="modal-vendorId" 
+                                    [(ngModel)]="purchaserequest.vendorId" 
+                                    name="vendorId"
                                     placeholder="Enter Vendor ID"
                                     required>
                             </div>
@@ -215,13 +331,13 @@
                         <div class="pr-details">
                             <h3>Purchase Request Details</h3>
                             <div class="detail-row">
-                                <strong>PR ID:</strong> {{ currentEditingPR.prid }}
+                                <strong>PR ID:</strong> {{ currentEditingPR.prId }}
                             </div>
                             <div class="detail-row">
-                                <strong>Event ID:</strong> {{ currentEditingPR.eventid }}
+                                <strong>Event ID:</strong> {{ currentEditingPR.eventId }} - {{ getEventName(currentEditingPR.eventId) }}
                             </div>
                             <div class="detail-row">
-                                <strong>Vendor ID:</strong> {{ currentEditingPR.vendorid }}
+                                <strong>Vendor ID:</strong> {{ currentEditingPR.vendorId }} - {{ getVendorName(currentEditingPR.vendorId) }}
                             </div>
                             <div class="detail-row">
                                 <strong>Amount:</strong> ₹{{ currentEditingPR.allocatedamount | number:'1.2-2' }}
@@ -290,15 +406,15 @@
                                 <div class="detail-grid">
                                     <div class="detail-item">
                                         <strong>PR ID:</strong>
-                                        <span>{{ currentViewingPR.prid }}</span>
+                                        <span>{{ currentViewingPR.prId }}</span>
                                     </div>
                                     <div class="detail-item">
                                         <strong>Event ID:</strong>
-                                        <span>{{ currentViewingPR.eventid }}</span>
+                                        <span>{{ currentViewingPR.eventId }} - {{ getEventName(currentViewingPR.eventId) }}</span>
                                     </div>
                                     <div class="detail-item">
                                         <strong>Vendor ID:</strong>
-                                        <span>{{ currentViewingPR.vendorid }}</span>
+                                        <span>{{ currentViewingPR.vendorId }} - {{ getVendorName(currentViewingPR.vendorId) }}</span>
                                     </div>
                                     <div class="detail-item">
                                         <strong>Request Date:</strong>
