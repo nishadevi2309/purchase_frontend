@@ -18,7 +18,10 @@ export class NegotiationEditComponent implements OnInit {
     finalquoteamount: null,
     negotiationDate: '',
     comments: '',
-    initialquoteamount: 0
+    initialquoteamount: 0,
+    approvalDate: '',
+    rejectionDate: '',
+    rejectionReason: ''
   };
   isLoading = false;
   isSaving = false;
@@ -65,6 +68,21 @@ export class NegotiationEditComponent implements OnInit {
 
   updateNegotiation(): void {
     if (!this.negotiation) return;
+    
+    // Automatically set approval/rejection dates when status changes
+    this.setStatusDates();
+    
+    // Store approval/rejection dates in localStorage since backend doesn't support them yet
+    if (this.negotiation.approvalDate) {
+      localStorage.setItem(`approval_date_${this.negotiationId}`, this.negotiation.approvalDate);
+      console.log('Stored approval date in localStorage:', this.negotiation.approvalDate, 'for negotiation', this.negotiationId);
+    }
+    if (this.negotiation.rejectionDate) {
+      localStorage.setItem(`rejection_date_${this.negotiationId}`, this.negotiation.rejectionDate);
+      localStorage.setItem(`rejection_reason_${this.negotiationId}`, this.negotiation.rejectionReason || '');
+      console.log('Stored rejection date in localStorage:', this.negotiation.rejectionDate, 'for negotiation', this.negotiationId);
+    }
+    
     this.isSaving = true;
     this.errorMessage = '';
     this.successMessage = '';
@@ -73,18 +91,17 @@ export class NegotiationEditComponent implements OnInit {
       negotiationstatus: this.negotiation.negotiationstatus,
       finalquoteamount: this.negotiation.finalquoteamount,
       negotiationDate: this.negotiation.negotiationDate,
-      comments: this.negotiation.comments
+      comments: this.negotiation.comments,
+      approvalDate: this.negotiation.approvalDate,
+      rejectionDate: this.negotiation.rejectionDate,
+      rejectionReason: this.negotiation.rejectionReason
     };
-    
-    console.log('Updating negotiation with data:', updateData);
-    console.log('Comments being sent:', this.negotiation.comments);
     
     this.purchaseService.updateNegotiation(this.negotiationId, updateData).subscribe({
       next: (updated) => {
         this.negotiation = updated;
         this.successMessage = 'Negotiation updated successfully!';
         this.isSaving = false;
-        console.log('Updated negotiation response:', updated);
         setTimeout(() => this.router.navigate(['/negotiate']), 2000);
       },
       error: (err) => {
@@ -123,6 +140,29 @@ export class NegotiationEditComponent implements OnInit {
   calculateSavingsPercentage(): number {
     if (!this.negotiation?.initialquoteamount || !this.negotiation?.finalquoteamount) return 0;
     return (this.calculateSavings() / this.negotiation.initialquoteamount) * 100;
+  }
+
+  setStatusDates(): void {
+    const currentDate = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+    const status = this.negotiation.negotiationstatus?.toLowerCase();
+    
+    if (status === 'approved') {
+      // Always set approval date when status is approved
+      this.negotiation.approvalDate = currentDate;
+      // Clear rejection fields when approved
+      this.negotiation.rejectionDate = '';
+      this.negotiation.rejectionReason = '';
+    } else if (status === 'rejected') {
+      // Always set rejection date when status is rejected
+      this.negotiation.rejectionDate = currentDate;
+      // Clear approval field when rejected
+      this.negotiation.approvalDate = '';
+    }
+  }
+
+  onStatusChange(): void {
+    // Automatically set dates when status changes
+    this.setStatusDates();
   }
 
   cancel(): void {

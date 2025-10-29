@@ -580,6 +580,45 @@ export class NegotiationComponent implements OnInit {
     this.router.navigate(['/negotiate/edit', negotiationId]);
   }
 
+  sendMail(negotiation: any): void {
+    // Construct email content with negotiation details
+    const subject = `Negotiation Update - NEG-${negotiation.negotiationid}`;
+    
+    // Build additional status information
+    let statusInfo = '';
+    if (negotiation.negotiationstatus?.toLowerCase() === 'approved' && negotiation.approvalDate) {
+      statusInfo = `\nDate of Approval: ${negotiation.approvalDate}`;
+    } else if (negotiation.negotiationstatus?.toLowerCase() === 'rejected') {
+      if (negotiation.rejectionDate) {
+        statusInfo += `\nDate of Rejection: ${negotiation.rejectionDate}`;
+      }
+      if (negotiation.rejectionReason) {
+        statusInfo += `\nReason for Rejection: ${negotiation.rejectionReason}`;
+      }
+    }
+
+    const body = `Dear Team,
+
+Please find the negotiation details below:
+
+Negotiation ID: NEG-${negotiation.negotiationid}
+Status: ${negotiation.negotiationstatus}${statusInfo}
+Initial Quote Amount: ₹${negotiation.initialquoteamount?.toLocaleString('en-IN') || 'N/A'}
+Final Quote Amount: ₹${negotiation.finalquoteamount?.toLocaleString('en-IN') || 'Pending'}
+Negotiation Date: ${negotiation.negotiationDate}
+Event ID: ${negotiation.eventid}
+Vendor ID: ${negotiation.vendorid}
+
+Best regards,
+Purchase Management System`;
+
+    // Create mailto URL
+    const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    
+    // Open email client
+    window.open(mailtoUrl, '_blank');
+  }
+
   getNegotiationStatusClass(status: string): string {
     const lowerStatus = status?.toLowerCase() || '';
     switch (lowerStatus) {

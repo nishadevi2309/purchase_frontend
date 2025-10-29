@@ -58,6 +58,10 @@ export class NegotiationViewComponent implements OnInit {
     this.purchaseService.getNegotiationDetails(this.negotiationId).subscribe({
       next: (data) => {
         this.negotiation = data;
+        
+        // Load approval/rejection dates from localStorage since backend doesn't support them
+        this.loadApprovalDataFromLocalStorage();
+        
         this.isLoading = false;
       },
       error: (err) => {
@@ -68,6 +72,29 @@ export class NegotiationViewComponent implements OnInit {
     });
   }
 
+  loadApprovalDataFromLocalStorage(): void {
+    if (!this.negotiation) return;
+    
+    // Load approval/rejection dates from localStorage since backend doesn't support them
+    const approvalDate = localStorage.getItem(`approval_date_${this.negotiationId}`);
+    const rejectionDate = localStorage.getItem(`rejection_date_${this.negotiationId}`);
+    const rejectionReason = localStorage.getItem(`rejection_reason_${this.negotiationId}`);
+    
+    console.log('Loading from localStorage for negotiation', this.negotiationId);
+    console.log('Found approval date:', approvalDate);
+    console.log('Found rejection date:', rejectionDate);
+    
+    if (approvalDate) {
+      this.negotiation.approvalDate = approvalDate;
+    }
+    if (rejectionDate) {
+      this.negotiation.rejectionDate = rejectionDate;
+    }
+    if (rejectionReason) {
+      this.negotiation.rejectionReason = rejectionReason;
+    }
+  }
+
   calculateSavings(): number {
     if (!this.negotiation?.initialquoteamount || !this.negotiation?.finalquoteamount) return 0;
     return this.negotiation.initialquoteamount - this.negotiation.finalquoteamount;
@@ -76,6 +103,27 @@ export class NegotiationViewComponent implements OnInit {
   calculateSavingsPercentage(): number {
     if (!this.negotiation?.initialquoteamount || !this.negotiation?.finalquoteamount) return 0;
     return (this.calculateSavings() / this.negotiation.initialquoteamount) * 100;
+  }
+
+  // New methods to handle loss scenarios
+  isSavings(): boolean {
+    return this.calculateSavings() > 0;
+  }
+
+  isLoss(): boolean {
+    return this.calculateSavings() < 0;
+  }
+
+  isNoChange(): boolean {
+    return this.calculateSavings() === 0;
+  }
+
+  getAbsoluteSavings(): number {
+    return Math.abs(this.calculateSavings());
+  }
+
+  getAbsoluteSavingsPercentage(): number {
+    return Math.abs(this.calculateSavingsPercentage());
   }
 
   backToList(): void {
@@ -105,5 +153,82 @@ export class NegotiationViewComponent implements OnInit {
     if (vendorId === undefined) return 'N/A';
     const vendor = this.allVendors.find(v => v.vendorId === vendorId);
     return vendor ? vendor.vendorname : `Vendor ${vendorId}`;
+  }
+
+  getVendorEmail(vendorId: number | undefined): string {
+    if (vendorId === undefined) return 'N/A';
+    const vendor = this.allVendors.find(v => v.vendorId === vendorId);
+    // TODO: When backend is updated with vendor email fields, this will return actual email
+    // Currently returns 'N/A' as placeholder
+    return vendor?.email || vendor?.vendoremail || 'N/A';
+  }
+
+  getVendorPhone(vendorId: number | undefined): string {
+    if (vendorId === undefined) return 'N/A';
+    const vendor = this.allVendors.find(v => v.vendorId === vendorId);
+    // TODO: When backend is updated with vendor phone fields, this will return actual phone
+    // Currently returns 'N/A' as placeholder
+    return vendor?.phone || vendor?.vendorphone || 'N/A';
+  }
+
+  getPRStatus(): string {
+    if (!this.negotiation?.purchaseRequest) return 'N/A';
+    
+    // If negotiation is approved, PR status should be approved regardless of backend status
+    if (this.negotiation.negotiationstatus?.toLowerCase() === 'approved') {
+      return 'APPROVED';
+    }
+    
+    // If negotiation is rejected, PR status should be rejected
+    if (this.negotiation.negotiationstatus?.toLowerCase() === 'rejected') {
+      return 'REJECTED';
+    }
+    
+    // For other statuses (PENDING, etc.), return the original PR status from backend
+    return this.negotiation.purchaseRequest.prstatus || this.negotiation.purchaseRequest.prStatus || 'PENDING';
+  }
+
+  getPRStatusClass(): string {
+    const status = this.getPRStatus().toLowerCase();
+    if (status === 'approved') return 'status-approved';
+    if (status === 'rejected') return 'status-rejected';
+    if (status === 'pending') return 'status-pending';
+    return 'status-default';
+  }
+
+  getApprovalDate(): string {
+    if (!this.negotiation) return 'Not specified';
+    
+    // Check multiple possible field names for approval date
+    const approvalDate = this.negotiation.approvalDate || 
+                        this.negotiation.approvaldate || 
+                        (this.negotiation as any).approval_date ||
+                        (this.negotiation as any).dateOfApproval;
+    
+    console.log('Getting approval date:', {
+      approvalDate: this.negotiation.approvalDate,
+      approvaldate: this.negotiation.approvaldate,
+      approval_date: (this.negotiation as any).approval_date,
+      dateOfApproval: (this.negotiation as any).dateOfApproval,
+      selected: approvalDate
+    });
+    
+    return approvalDate || 'Not specified';
+  }
+
+  getRejectionDate(): string {
+    if (!this.negotiation) return 'Not specified';
+    
+    // Check multiple possible field names for rejection date
+    const rejectionDate = this.negotiation.rejectionDate || 
+                         this.negotiation.rejectiondate || 
+                         (this.negotiation as any).rejection_date ||
+                         (this.negotiation as any).dateOfRejection;
+    
+    return rejectionDate || 'Not specified';
+  }
+
+  getObjectKeys(obj: any): string[] {
+    return obj ? Object.keys(obj) : [];
   }
 }

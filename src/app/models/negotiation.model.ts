@@ -12,6 +12,14 @@ export interface Negotiation {
   negotiationDate: string; // ISO date string (YYYY-MM-DD)
   comments?: string; // Added comments field
   purchaseRequest?: PurchaseRequest;
+  
+  // New fields for approval/rejection tracking
+  approvalDate?: string; // Date when negotiation was approved
+  approvaldate?: string; // Alternative field name for backend compatibility
+  rejectionDate?: string; // Date when negotiation was rejected
+  rejectiondate?: string; // Alternative field name for backend compatibility
+  rejectionReason?: string; // Reason for rejection
+  rejectionreason?: string; // Alternative field name for backend compatibility
 }
 
 // DTO for initiating a negotiation (matches backend InitiateNegotiationRequest)

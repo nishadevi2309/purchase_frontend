@@ -53,6 +53,7 @@
         <select 
           id="status" 
           [(ngModel)]="negotiation.negotiationstatus" 
+          (ngModelChange)="onStatusChange()"
           class="form-control" 
           [disabled]="isSaving">
           <option value="">Select Status</option>
@@ -93,6 +94,40 @@
         <div class="info-display" style="padding: 8px; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; color: #495057;">
           {{ negotiation?.negotiationDate | date:'dd/MM/yyyy' }}
         </div>
+      </div>
+
+      <!-- Approval Date Field (shown when status is APPROVED) -->
+      <div class="form-group" *ngIf="negotiation?.negotiationstatus?.toLowerCase() === 'approved'">
+        <label for="approvalDate">Date of Approval <span class="required">*</span></label>
+        <input 
+          type="date" 
+          id="approvalDate" 
+          [(ngModel)]="negotiation.approvalDate" 
+          class="form-control" 
+          [disabled]="isSaving">
+      </div>
+
+      <!-- Rejection Date Field (shown when status is REJECTED) -->
+      <div class="form-group" *ngIf="negotiation?.negotiationstatus?.toLowerCase() === 'rejected'">
+        <label for="rejectionDate">Date of Rejection <span class="required">*</span></label>
+        <input 
+          type="date" 
+          id="rejectionDate" 
+          [(ngModel)]="negotiation.rejectionDate" 
+          class="form-control" 
+          [disabled]="isSaving">
+      </div>
+
+      <!-- Rejection Reason Field (shown when status is REJECTED) -->
+      <div class="form-group" *ngIf="negotiation?.negotiationstatus?.toLowerCase() === 'rejected'">
+        <label for="rejectionReason">Reason for Rejection <span class="required">*</span></label>
+        <textarea 
+          id="rejectionReason" 
+          [(ngModel)]="negotiation.rejectionReason" 
+          class="form-control" 
+          [disabled]="isSaving"
+          rows="3"
+          placeholder="Please provide the reason for rejection..."></textarea>
       </div>
 
       <!-- Negotiation Comments/Description Field -->

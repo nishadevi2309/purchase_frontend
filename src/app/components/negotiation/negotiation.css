@@ -410,6 +410,16 @@ table td:nth-child(9) {
     border-color: #303f9f !important;
 }
 
+.mail-btn {
+    background-color: #28a745 !important;
+    border-color: #28a745 !important;
+}
+
+.mail-btn:hover {
+    background-color: #218838 !important;
+    border-color: #1e7e34 !important;
+}
+
 /* Savings display styles */
 .savings-positive {
     color: #4caf50;

@@ -14,6 +14,10 @@ export interface purchaserequests {
 export interface Vendor {
     vendorId: number;
     vendorname: string;
+    email?: string;          // Optional - will be available when backend is updated
+    vendoremail?: string;    // Alternative field name for compatibility
+    phone?: string;          // Optional - will be available when backend is updated
+    vendorphone?: string;    // Alternative field name for compatibility
 }
 
 export interface Event {
